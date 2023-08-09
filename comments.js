@@ -1,42 +1,54 @@
-// create web server with express
-const express = require('express');
-const app = express();
-// create body parser
-const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-// create mongoose
-const mongoose = require('mongoose');
-// connect mongoose to database
-mongoose.connect('mongodb://localhost/comments', { useNewUrlParser: true });
-// create schema
-const Schema = mongoose.Schema;
-// create schema for comments
-const commentSchema = new Schema({
-    name: String,
-    comment: String
+// Create web server
+// Create a route for /comments
+// Create a route for /comments/new
+// Create a route for /comments/:id
+// Create a route for /comments/:id/edit
+// Create a route for /comments/:id/delete
+// Listen on port 3000
+
+// Path: comments.js
+// Create web server
+var express = require('express');
+var app = express();
+var bodyParser = require('body-parser');
+var comments = require('./comments');
+
+// Create a route for /comments
+app.get('/comments', function(request, response) {
+  response.json(comments);
 });
-// create model for comments
-const Comment = mongoose.model('Comment', commentSchema);
-// set view engine to ejs
-app.set('view engine', 'ejs');
-// set static folder
-app.use(express.static('public'));
-// create route for home page
-app.get('/', (req, res) => {
-    Comment.find({}, (err, data) => {
-        if (err) throw err;
-        res.render('index', { comments: data });
-    });
+
+// Create a route for /comments/new
+app.post('/comments/new', bodyParser.urlencoded({extended: true}), function(request, response) {
+  var newComment = request.body;
+  comments.push(newComment);
+  response.json(newComment);
 });
-// create route for post request
-app.post('/comment', (req, res) => {
-    const newComment = new Comment(req.body);
-    newComment.save((err, data) => {
-        if (err) throw err;
-        res.redirect('/');
-    });
+
+// Create a route for /comments/:id
+app.get('/comments/:id', function(request, response) {
+  var id = request.params.id;
+  var comment = comments[id];
+  response.json(comment);
 });
-// create server
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server is running on port ${port}`));
+
+// Create a route for /comments/:id/edit
+app.put('/comments/:id/edit', bodyParser.urlencoded({extended: true}), function(request, response) {
+  var id = request.params.id;
+  var comment = comments[id];
+  comment.body = request.body.body;
+  response.json(comment);
+});
+
+// Create a route for /comments/:id/delete
+app.delete('/comments/:id/delete', function(request, response) {
+  var id = request.params.id;
+  var comment = comments[id];
+  comments.splice(id, 1);
+  response.json(comment);
+});
+
+// Listen on port 3000
+app.listen(3000, function() {
+  console.log('Listening on port 3000...');
+});
